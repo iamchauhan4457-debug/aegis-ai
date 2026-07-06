@@ -23,12 +23,6 @@ button{cursor:pointer;}
 </head>
 <body>
 <div id="root"></div>
-<div id="err-box" style="display:none;position:fixed;inset:0;background:#09090B;color:#F43F5E;font-family:monospace;font-size:12px;padding:20px;overflow:auto;z-index:9999;white-space:pre-wrap;"></div>
-<script>
-  function showErr(msg){var box=document.getElementById('err-box');box.style.display='block';box.textContent='ERROR:\n'+msg;}
-  window.addEventListener('error', function(e){ showErr((e.message||'')+'\n'+(e.filename||'')+':'+(e.lineno||'')); });
-  window.addEventListener('unhandledrejection', function(e){ showErr('Unhandled Promise Rejection: '+(e.reason&&e.reason.message?e.reason.message:JSON.stringify(e.reason))); });
-</script>
 <script type="text/babel">
 const {useState,useEffect}=React;
 const SB="https://eaqktznqqbzjnwszpovw.supabase.co";
@@ -54,10 +48,9 @@ const gemKey={get:()=>localStorage.getItem("aegis_gemini_key")||"",set:(v)=>loca
 const askGemini=async(key,prompt)=>{
   const url=`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`;
   const r=await go(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({contents:[{parts:[{text:prompt}]}]})});
-  if(r&&r.error&&typeof r.error==="object")return{error:true,message:r.error.message||JSON.stringify(r.error)};
-  if(r&&r.error===true)return{error:true,message:r.message||"Network/fetch error"};
+  if(r.error)return{error:true,message:r.message};
   const text=r?.candidates?.[0]?.content?.parts?.[0]?.text;
-  if(!text)return{error:true,message:"Gemini thi javab na malyo. Raw response: "+JSON.stringify(r).slice(0,300)};
+  if(!text)return{error:true,message:r?.error?.message||"Gemini thi javab na malyo — API key check karo"};
   return{error:false,text};
 };
 const C={bg:"#09090B",surf:"#111113",card:"#18181B",cardH:"#1C1C1F",border:"#27272A",borderL:"#3F3F46",indigo:"#6366F1",indigoL:"#818CF8",cyan:"#22D3EE",green:"#10B981",red:"#F43F5E",amber:"#F59E0B",txt:"#FAFAFA",txt2:"#A1A1AA",txt3:"#52525B",grad:"linear-gradient(135deg,#6366F1,#22D3EE)",gradS:"linear-gradient(135deg,rgba(99,102,241,.12),rgba(34,211,238,.06))"};
@@ -247,16 +240,11 @@ function AIInsights({projs,risks,onNav}){
     const key=gemKey.get();
     if(!key){sErr("Pehla Settings ma jaine Gemini API key nakho.");return;}
     sL(true);sErr("");sText("");
-    try{
-      const summary=`Projects:\n${projs.map(p=>`- ${p.name} (team: ${p.team||"N/A"}, health: ${p.health_score}%, status: ${p.status}, sprint: ${p.sprint||"N/A"})`).join("\n")||"No projects yet"}\n\nRisks:\n${risks.map(r=>`- [${r.severity}] ${r.description} (impact: ${r.financial_impact||"N/A"}, owner: ${r.owner_name||"N/A"})`).join("\n")||"No risks logged"}`;
-      const prompt=`Tame ek engineering delivery advisor cho. Niche apel project ane risk data joine, 4-5 sankshipt (short) actionable insights aapo — jema priority order ma su focus karvu joie e kaho. Gujarati-English mix (Gujlish) ma, mobile screen mate short bullet points banavo, dares no use na karo:\n\n${summary}`;
-      const res=await askGemini(key,prompt);
-      sL(false);
-      if(res.error)sErr(res.message||"Unknown error aavi");else if(!res.text)sErr("Khali javab malyo Gemini thi");else sText(res.text);
-    }catch(ex){
-      sL(false);
-      sErr("Exception: "+(ex&&ex.message?ex.message:String(ex)));
-    }
+    const summary=`Projects:\n${projs.map(p=>`- ${p.name} (team: ${p.team||"N/A"}, health: ${p.health_score}%, status: ${p.status}, sprint: ${p.sprint||"N/A"})`).join("\n")||"No projects yet"}\n\nRisks:\n${risks.map(r=>`- [${r.severity}] ${r.description} (impact: ${r.financial_impact||"N/A"}, owner: ${r.owner_name||"N/A"})`).join("\n")||"No risks logged"}`;
+    const prompt=`Tame ek engineering delivery advisor cho. Niche apel project ane risk data joine, 4-5 sankshipt (short) actionable insights aapo — jema priority order ma su focus karvu joie e kaho. Gujarati-English mix (Gujlish) ma, mobile screen mate short bullet points banavo, dares no use na karo:\n\n${summary}`;
+    const res=await askGemini(key,prompt);
+    sL(false);
+    if(res.error)sErr(res.message);else sText(res.text);
   };
   return<Card sx={{marginTop:14,border:`1px solid ${C.cyan}30`}}>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
