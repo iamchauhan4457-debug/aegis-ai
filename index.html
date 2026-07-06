@@ -1,6 +1,5 @@
 
-cat > /mnt/user-data/outputs/index.html << 'HTMLEOF'
-<!DOCTYPE html>
+    <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
@@ -21,6 +20,7 @@ button{cursor:pointer;}
 @keyframes spin{to{transform:rotate(360deg);}}
 @keyframes fu{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
 .fu{animation:fu .3s ease both;}
+table{width:100%;border-collapse:collapse;}
 </style>
 </head>
 <body>
@@ -61,6 +61,7 @@ const Toast=({msg,type="success"})=><div style={{position:"fixed",bottom:24,righ
 
 const NAVS={ceo:[{id:"dash",l:"Overview"},{id:"risks",l:"Risks"},{id:"cfg",l:"Settings"}],mgr:[{id:"dash",l:"Dashboard"},{id:"proj",l:"Projects"},{id:"risks",l:"Risks"},{id:"cfg",l:"Settings"}],dev:[{id:"dash",l:"My Work"},{id:"proj",l:"Projects"},{id:"cfg",l:"Settings"}]};
 const RM={ceo:{l:"CEO",c:C.amber},mgr:{l:"Eng. Manager",c:C.cyan},dev:{l:"Developer",c:C.green}};
+const TITLES={dash:"Dashboard",proj:"Projects",risks:"Risk Center",cfg:"Settings",price:"Pricing"};
 
 function Sidebar({user,prof,pg,onNav,onOut}){
   const role=prof?.role||"mgr";const nav=NAVS[role]||NAVS.mgr;const rm=RM[role]||RM.mgr;
@@ -84,6 +85,20 @@ function Sidebar({user,prof,pg,onNav,onOut}){
   </aside>;
 }
 
+function TopBar({title}){
+  return<header style={{height:56,background:C.surf,borderBottom:`1px solid ${C.border}`,display:"flex",alignItems:"center",padding:"0 22px",position:"sticky",top:0,zIndex:10}}><div style={{fontSize:15,fontWeight:700}}>{title}</div></header>;
+}
+
+function Shell({user,prof,pg,onNav,onOut,title,children}){
+  return<div style={{display:"flex",minHeight:"100vh",background:C.bg}}>
+    <Sidebar user={user} prof={prof} pg={pg} onNav={onNav} onOut={onOut}/>
+    <div style={{flex:1,display:"flex",flexDirection:"column",minWidth:0}}>
+      <TopBar title={title}/>
+      <main style={{flex:1,padding:22,overflowY:"auto"}} className="fu">{children}</main>
+    </div>
+  </div>;
+}
+
 function Login({onLogin,onSignup}){
   const[em,sE]=useState("");const[pw,sP]=useState("");const[err,sErr]=useState("");const[loading,sL]=useState(false);
   const go=async()=>{if(!em||!pw){sErr("Email ane password nakho");return;}sL(true);sErr("");const d=await api.in(em,pw);sL(false);if(d.access_token)onLogin(d);else sErr(d.error_description||d.message||"Login failed");};
@@ -104,7 +119,7 @@ function Login({onLogin,onSignup}){
   </div>;
 }
 
-function Signup({onLogin}){
+function Signup({onLogin,onBack}){
   const[form,sF]=useState({name:"",email:"",pw:"",role:"mgr",co:""});const[err,sErr]=useState("");const[loading,sL]=useState(false);const[status,sSt]=useState("");
   const f=k=>e=>sF({...form,[k]:e.target.value});
   const go=async()=>{
@@ -132,7 +147,7 @@ function Signup({onLogin}){
           <Btn v="grad" full sz="lg" onClick={go} dis={loading}>{loading?"Please wait...":"Create Account"}</Btn>
         </div>
         <Hr m={14}/>
-        <p style={{textAlign:"center",fontSize:13,color:C.txt2}}>Have account? <span onClick={onLogin} style={{color:C.indigoL,cursor:"pointer",fontWeight:600}}>Sign in</span></p>
+        <p style={{textAlign:"center",fontSize:13,color:C.txt2}}>Have account? <span onClick={onBack} style={{color:C.indigoL,cursor:"pointer",fontWeight:600}}>Sign in</span></p>
       </Card>
     </div>
   </div>;
@@ -171,6 +186,4 @@ function Dashboard({user,prof,token,onNav}){
     </div>
     {projs.length===0?<Card sx={{textAlign:"center",padding:40}}><div style={{fontSize:36,marginBottom:12}}>🚀</div><div style={{fontSize:15,fontWeight:700,marginBottom:6}}>Pehlo project add karo!</div><div style={{fontSize:13,color:C.txt2,marginBottom:18}}>Projects add karo ane tracking shuru karo</div><Btn v="grad" onClick={()=>onNav("proj")}>Add Project</Btn></Card>
     :<div>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}><div style={{fontSize:13,fontWeight:700}}>Recent Projects</div><Btn v="ghost" sz="sm" onClick={()=>onNav("proj")}>View All →</Btn></div>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:12}}>
-        {projs.slice(0,4).map(p=>{const sc=p.status==="healthy"?C.green:p.status==="at-risk"?C.red:C.amber;return<Card key={p.id} onClick={()=>onNav("proj")}><div style={{display:"flex",justifyContent:"space-between",marginBottom:10}}><div style={{fontSize:13,fontWeight:600}}>{p.name}</div><Dot col={sc}/></div><Chip l={p.team||"Engineering"} col="gray"/><div style={{marginTop:10}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}><span style={{fontSize:11,colo
+      <div style={{display:"flex",ju
