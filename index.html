@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -171,4 +172,125 @@ function Dashboard({user,prof,token,onNav}){
     :<div>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}><div style={{fontSize:13,fontWeight:700}}>Recent Projects</div><Btn v="ghost" sz="sm" onClick={()=>onNav("proj")}>View All →</Btn></div>
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:12}}>
-        {projs.slice(0,4).map(p=>{const sc=p.status==="healthy"?C.green:p.status==="at-risk"?C.red:C.amber;return<Card key={p.id} onClick={()=>onNav("proj")}><div style={{display:"flex",justifyContent:"space-between",marginBottom:10}}><div style={{fontSize:13,fontWeight:600}}>{p.name}</div><Dot col={sc}/></div><Chip l={p.team||"Engineering"} col="gray"/><div style={{marginTop:10}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}><span style={{fontSize:11,color:C.txt3}}>Health</span><span style={{fontSize:11,fon
+        {projs.slice(0,4).map(p=>{const sc=p.status==="healthy"?C.green:p.status==="at-risk"?C.red:C.amber;return<Card key={p.id} onClick={()=>onNav("proj")}><div style={{display:"flex",justifyContent:"space-between",marginBottom:10}}><div style={{fontSize:13,fontWeight:600}}>{p.name}</div><Dot col={sc}/></div><Chip l={p.team||"Engineering"} col="gray"/><div style={{marginTop:10}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}><span style={{fontSize:11,color:C.txt3}}>Health</span><span style={{fontSize:11,fontWeight:700,color:sc}}>{p.health_score}%</span></div><Bar v={p.health_score} col={sc}/></div></Card>;})}
+      </div>
+    </div>}
+    <Card sx={{marginTop:14,background:C.gradS,border:`1px solid ${C.indigo}30`}}>
+      <div style={{fontSize:13,fontWeight:700,marginBottom:10}}>Quick Actions</div>
+      <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
+        <Btn v="grad" onClick={()=>onNav("proj")}>+ Add Project</Btn>
+        <Btn v="out" onClick={()=>onNav("risks")}>+ Add Risk</Btn>
+        <Btn v="ghost" onClick={()=>onNav("cfg")}>⚙ Settings</Btn>
+      </div>
+    </Card>
+  </div>;
+}
+
+function Projects({token,uid}){
+  const[projs,sP]=useState([]);const[loading,sL]=useState(true);const[showAdd,sSA]=useState(false);const[toast,sT]=useState(null);
+  const[form,sF]=useState({name:"",team:"",sprint:"",health_score:75,risk_score:25,status:"healthy",deadline:""});const[saving,sSv]=useState(false);
+  const load=async()=>{sL(true);const d=await api.projs(token);sP(Array.isArray(d)?d:[]);sL(false);};
+  useEffect(()=>{load();},[]);
+  const showT=(msg,type="success")=>{sT({msg,type});setTimeout(()=>sT(null),3000);};
+  const add=async()=>{if(!form.name)return;sSv(true);await api.addProj(token,uid,{...form,health_score:Number(form.health_score),risk_score:Number(form.risk_score)});sSv(false);sSA(false);sF({name:"",team:"",sprint:"",health_score:75,risk_score:25,status:"healthy",deadline:""});showT("Project add thayo! ✅");load();};
+  const del=async(id)=>{if(!confirm("Delete karvu?"))return;await api.delProj(token,id);showT("Deleted","error");load();};
+  const f=k=>e=>sF({...form,[k]:e.target.value});
+  return<div className="fu">
+    {toast&&<Toast msg={toast.msg} type={toast.type}/>}
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}><div style={{fontSize:13,color:C.txt2}}>{projs.length} projects</div><Btn v="grad" onClick={()=>sSA(true)}>+ New Project</Btn></div>
+    {loading?<div style={{display:"flex",justifyContent:"center",padding:48}}><Spin/></div>
+    :projs.length===0?<Card sx={{textAlign:"center",padding:40}}><div style={{fontSize:32,marginBottom:10}}>📋</div><div style={{fontSize:14,fontWeight:700,marginBottom:6}}>Koi project nathi</div><Btn v="grad" onClick={()=>sSA(true)}>+ Add Project</Btn></Card>
+    :<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:12}}>
+      {projs.map(p=>{const sc=p.status==="healthy"?C.green:p.status==="at-risk"?C.red:C.amber;return<Card key={p.id}><div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}><div style={{flex:1}}><div style={{fontSize:13,fontWeight:700,marginBottom:4}}>{p.name}</div><Chip l={p.team||"Engineering"} col="gray"/></div><div style={{display:"flex",gap:8,alignItems:"center"}}><Dot col={sc}/><span onClick={()=>del(p.id)} style={{cursor:"pointer",color:C.txt3,fontSize:16}}>🗑</span></div></div><div style={{marginBottom:8}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}><span style={{fontSize:11,color:C.txt3}}>Health</span><span style={{fontSize:11,fontWeight:700,color:sc}}>{p.health_score}%</span></div><Bar v={p.health_score} col={sc}/></div><div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:C.txt3}}><span>{p.sprint||"No sprint"}</span><Chip l={p.status==="healthy"?"Healthy":p.status==="at-risk"?"At Risk":"Warning"} col={p.status==="healthy"?"green":p.status==="at-risk"?"red":"amber"}/></div></Card>;})}
+    </div>}
+    {showAdd&&<Modal title="New Project" onClose={()=>sSA(false)}>
+      <div style={{display:"flex",flexDirection:"column",gap:12}}>
+        <Inp lbl="Project Name *" ph="Payment Gateway v3" val={form.name} onChange={f("name")}/>
+        <Inp lbl="Team" ph="Backend, Mobile..." val={form.team} onChange={f("team")}/>
+        <Inp lbl="Sprint" ph="Sprint 8" val={form.sprint} onChange={f("sprint")}/>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}><Inp lbl="Health (0-100)" ph="75" val={form.health_score} onChange={f("health_score")} type="number"/><Inp lbl="Risk (0-100)" ph="25" val={form.risk_score} onChange={f("risk_score")} type="number"/></div>
+        <Sel lbl="Status" val={form.status} onChange={f("status")} opts={[{v:"healthy",l:"✅ Healthy"},{v:"warning",l:"⚠️ Warning"},{v:"at-risk",l:"🔴 At Risk"}]}/>
+        <Inp lbl="Deadline" val={form.deadline} onChange={f("deadline")} type="date"/>
+        <div style={{display:"flex",gap:8,marginTop:4}}><Btn v="ghost" full onClick={()=>sSA(false)}>Cancel</Btn><Btn v="grad" full onClick={add} dis={saving}>{saving?<Spin/>:"Add Project"}</Btn></div>
+      </div>
+    </Modal>}
+  </div>;
+}
+
+function Risks({token,uid}){
+  const[risks,sR]=useState([]);const[projs,sP]=useState([]);const[loading,sL]=useState(true);
+  const[showAdd,sSA]=useState(false);const[toast,sT]=useState(null);
+  const[form,sF]=useState({description:"",severity:"medium",financial_impact:"",owner_name:"",project_id:""});const[saving,sSv]=useState(false);
+  const load=async()=>{sL(true);const[r,p]=await Promise.all([api.risks(token),api.projs(token)]);sR(Array.isArray(r)?r:[]);sP(Array.isArray(p)?p:[]);sL(false);};
+  useEffect(()=>{load();},[]);
+  const showT=(msg,type="success")=>{sT({msg,type});setTimeout(()=>sT(null),3000);};
+  const add=async()=>{if(!form.description)return;sSv(true);await api.addRisk(token,uid,form);sSv(false);sSA(false);sF({description:"",severity:"medium",financial_impact:"",owner_name:"",project_id:""});showT("Risk add thayo! ✅");load();};
+  const del=async(id)=>{if(!confirm("Delete?"))return;await api.delRisk(token,id);showT("Deleted","error");load();};
+  const f=k=>e=>sF({...form,[k]:e.target.value});
+  return<div className="fu">
+    {toast&&<Toast msg={toast.msg} type={toast.type}/>}
+    <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,marginBottom:16}}>
+      {[{l:"Critical",v:risks.filter(r=>r.severity==="critical").length,c:C.red},{l:"High",v:risks.filter(r=>r.severity==="high").length,c:C.amber},{l:"Total",v:risks.length,c:C.indigo}].map(r=><Card key={r.l} sx={{borderColor:`${r.c}25`}}><div style={{fontSize:26,fontWeight:900,color:r.c}}>{r.v}</div><div style={{fontSize:12,color:C.txt2}}>{r.l}</div></Card>)}
+    </div>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}><div style={{fontSize:13,fontWeight:700}}>All Risks</div><Btn v="grad" onClick={()=>sSA(true)}>+ Add Risk</Btn></div>
+    {loading?<div style={{display:"flex",justifyContent:"center",padding:40}}><Spin/></div>
+    :risks.length===0?<Card sx={{textAlign:"center",padding:36}}><div style={{fontSize:28,marginBottom:8}}>✅</div><div style={{fontSize:13,fontWeight:700}}>Koi risk nathi!</div></Card>
+    :<Card sx={{padding:0,overflow:"hidden"}}><table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr style={{background:C.surf}}>{["Description","Severity","Impact","Owner",""].map(h=><th key={h} style={{padding:"8px 14px",fontSize:10,fontWeight:700,color:C.txt3,textAlign:"left",textTransform:"uppercase"}}>{h}</th>)}</tr></thead><tbody>{risks.map(r=><tr key={r.id} style={{borderTop:`1px solid ${C.border}`}} onMouseEnter={e=>e.currentTarget.style.background=C.cardH} onMouseLeave={e=>e.currentTarget.style.background="transparent"}><td style={{padding:"10px 14px",fontSize:12}}>{r.description}</td><td style={{padding:"10px 14px"}}><Chip l={r.severity} col={r.severity==="critical"?"red":r.severity==="high"?"amber":"indigo"}/></td><td style={{padding:"10px 14px",fontSize:12,color:C.red,fontWeight:600}}>{r.financial_impact||"-"}</td><td style={{padding:"10px 14px",fontSize:12,color:C.txt2}}>{r.owner_name||"-"}</td><td style={{padding:"10px 14px"}}><span onClick={()=>del(r.id)} style={{cursor:"pointer",fontSize:15}}>🗑</span></td></tr>)}</tbody></table></Card>}
+    {showAdd&&<Modal title="Add Risk" onClose={()=>sSA(false)}>
+      <div style={{display:"flex",flexDirection:"column",gap:12}}>
+        <Inp lbl="Description *" ph="Sprint velocity drop..." val={form.description} onChange={f("description")} rows={2}/>
+        <Sel lbl="Severity" val={form.severity} onChange={f("severity")} opts={[{v:"critical",l:"🔴 Critical"},{v:"high",l:"🟠 High"},{v:"medium",l:"🟡 Medium"},{v:"low",l:"🟢 Low"}]}/>
+        {projs.length>0&&<Sel lbl="Project" val={form.project_id} onChange={f("project_id")} opts={[{v:"",l:"General"},...projs.map(p=>({v:p.id,l:p.name}))]}/>}
+        <Inp lbl="Financial Impact" ph="₹5L" val={form.financial_impact} onChange={f("financial_impact")}/>
+        <Inp lbl="Owner" ph="Priya Sharma" val={form.owner_name} onChange={f("owner_name")}/>
+        <div style={{display:"flex",gap:8,marginTop:4}}><Btn v="ghost" full onClick={()=>sSA(false)}>Cancel</Btn><Btn v="grad" full onClick={add} dis={saving}>{saving?<Spin/>:"Add Risk"}</Btn></div>
+      </div>
+    </Modal>}
+  </div>;
+}
+
+function Settings({token,uid,prof,onUpdate}){
+  const[form,sF]=useState({full_name:prof?.full_name||"",company_name:prof?.company_name||"",role:prof?.role||"mgr"});
+  const[saving,sSv]=useState(false);const[toast,sT]=useState(null);
+  const f=k=>e=>sF({...form,[k]:e.target.value});
+  const save=async()=>{sSv(true);await api.saveProf(token,uid,form);sSv(false);onUpdate(form);sT({msg:"Saved! ✅",type:"success"});setTimeout(()=>sT(null),3000);};
+  return<div className="fu" style={{maxWidth:460}}>
+    {toast&&<Toast msg={toast.msg} type={toast.type}/>}
+    <Card>
+      <div style={{display:"flex",gap:12,alignItems:"center",marginBottom:16}}><Av n={form.full_name} s={50}/><div><div style={{fontSize:14,fontWeight:700}}>{form.full_name||"Your Name"}</div><div style={{fontSize:12,color:C.txt3}}>Aegis AI</div></div></div>
+      <Hr m={14}/>
+      <div style={{display:"flex",flexDirection:"column",gap:12}}>
+        <Inp lbl="Full Name" ph="Raj Patel" val={form.full_name} onChange={f("full_name")}/>
+        <Inp lbl="Company Name" ph="Acme Corp" val={form.company_name} onChange={f("company_name")}/>
+        <Sel lbl="Role" val={form.role} onChange={f("role")} opts={[{v:"ceo",l:"CEO / Founder"},{v:"mgr",l:"Engineering Manager"},{v:"dev",l:"Developer"}]}/>
+        <Btn v="grad" onClick={save} dis={saving}>{saving?<Spin/>:"✓ Save Changes"}</Btn>
+      </div>
+    </Card>
+  </div>;
+}
+
+const TT={dash:"Dashboard",proj:"Projects",risks:"Risk Center",cfg:"Settings"};
+
+function App(){
+  const[sc,sSc]=useState("login");const[auth,sAuth]=useState(null);const[prof,sProf]=useState(null);const[pg,sPg]=useState("dash");
+  const login=async(data)=>{sAuth(data);const p=await api.prof(data.access_token,data.user.id);sProf(p||{full_name:data.user.email?.split("@")[0],role:"mgr"});sSc("app");sPg("dash");};
+  const logout=async()=>{if(auth)await api.out(auth.access_token);sAuth(null);sProf(null);sSc("login");};
+  const nav=p=>{if(p==="price"){sSc("price");return;}sPg(p);};
+  const page=()=>{if(!auth)return null;switch(pg){case"dash":return<Dashboard user={auth.user} prof={prof} token={auth.access_token} onNav={nav}/>;case"proj":return<Projects token={auth.access_token} uid={auth.user.id}/>;case"risks":return<Risks token={auth.access_token} uid={auth.user.id}/>;case"cfg":return<Settings token={auth.access_token} uid={auth.user.id} prof={prof} onUpdate={p=>sProf({...prof,...p})}/>;default:return<Dashboard user={auth.user} prof={prof} token={auth.access_token} onNav={nav}/>;}};
+  return<div style={{fontFamily:"Inter,-apple-system,sans-serif",background:C.bg,minHeight:"100vh",color:C.txt}}>
+    {sc==="login"&&<Login onLogin={login} onSignup={()=>sSc("signup")}/>}
+    {sc==="signup"&&<Signup onLogin={()=>sSc("login")}/>}
+    {sc==="price"&&<Pricing onBack={()=>sSc("app")}/>}
+    {sc==="app"&&<div style={{display:"flex",minHeight:"100vh"}}>
+      <Sidebar user={auth?.user} prof={prof} pg={pg} onNav={nav} onOut={logout}/>
+      <div style={{flex:1,display:"flex",flexDirection:"column",minWidth:0}}>
+        <header style={{height:52,background:C.surf,borderBottom:`1px solid ${C.border}`,display:"flex",alignItems:"center",padding:"0 20px",fontSize:14,fontWeight:700,position:"sticky",top:0,zIndex:10}}>{TT[pg]||"Dashboard"}</header>
+        <main style={{flex:1,padding:20,overflowY:"auto"}}>{page()}</main>
+      </div>
+    </div>}
+  </div>;
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
