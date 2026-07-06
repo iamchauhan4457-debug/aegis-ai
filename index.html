@@ -1,13 +1,12 @@
-
-    <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Aegis AI</title>
-<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@babel/standalone/babel.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:#09090B;color:#FAFAFA;font-family:Inter,-apple-system,sans-serif;}
@@ -24,7 +23,11 @@ table{width:100%;border-collapse:collapse;}
 </style>
 </head>
 <body>
-<div id="root"></div>
+<div id="root">
+  <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;color:#A1A1AA;font-family:-apple-system,sans-serif;font-size:14px;text-align:center;padding:20px;">
+    Loading Aegis AI...<br/>Jo aa message j rahi jay, internet/script load issue che.
+  </div>
+</div>
 <script type="text/babel">
 const {useState,useEffect}=React;
 const SB="https://eaqktznqqbzjnwszpovw.supabase.co";
@@ -184,6 +187,4 @@ function Dashboard({user,prof,token,onNav}){
     <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:13,marginBottom:18}}>
       {[{l:"Total Projects",v:projs.length,c:C.indigo},{l:"Healthy",v:heal,c:C.green},{l:"Critical Risks",v:crit,c:C.red}].map(k=><Card key={k.l}><div style={{fontSize:28,fontWeight:900,color:k.c,marginBottom:4}}>{k.v}</div><div style={{fontSize:12,color:C.txt2}}>{k.l}</div></Card>)}
     </div>
-    {projs.length===0?<Card sx={{textAlign:"center",padding:40}}><div style={{fontSize:36,marginBottom:12}}>🚀</div><div style={{fontSize:15,fontWeight:700,marginBottom:6}}>Pehlo project add karo!</div><div style={{fontSize:13,color:C.txt2,marginBottom:18}}>Projects add karo ane tracking shuru karo</div><Btn v="grad" onClick={()=>onNav("proj")}>Add Project</Btn></Card>
-    :<div>
-      <div style={{display:"flex",ju
+    {projs.length===0?<Card sx={{textAlign:"center",padding:40}}><div style={{fontSize:36,marginBottom:1
