@@ -550,7 +550,7 @@ function App(){
   if(booting)return<div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:C.bg}}><Spin/></div>;
   return<div style={{fontFamily:"Inter,-apple-system,sans-serif",background:C.bg,minHeight:"100vh",color:C.txt}}>
     {sc==="login"&&<Login onLogin={login} onSignup={()=>sSc("signup")} onForgot={()=>sSc("forgot")}/>}
-    {sc==="signup"&&<Signup onLogin={()=>sSc("login")}/>}
+    {sc==="signup"&&<Signup onLogin={login}/>}
     {sc==="forgot"&&<ForgotPw onBack={()=>sSc("login")}/>}
     {sc==="reset"&&<ResetPw token={recoveryToken} onDone={()=>sSc("login")}/>}
     {sc==="price"&&<Pricing onBack={()=>sSc("app")}/>}
